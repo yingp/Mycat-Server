@@ -24,6 +24,7 @@
 package io.mycat.backend.mysql.nio;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger; import org.slf4j.LoggerFactory;
@@ -86,13 +87,19 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
 		throw new RuntimeException("offer data error!");
 	}
 
+	// support [ call p_test(1,@pout);select @pout ]
+	final static byte[] PROCEDURE_OUT_PACKET = new byte[]{7, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0};
+
 	@Override
 	protected void handleData(byte[] data) {
 		switch (resultStatus) {
 		case RESULT_STATUS_INIT:
 			switch (data[4]) {
 			case OkPacket.FIELD_COUNT:
-				handleOkPacket(data);
+				// support [ call p_test(1,@pout);select @pout ]
+				if (!Arrays.equals(data, PROCEDURE_OUT_PACKET)) {
+					handleOkPacket(data);
+				}
 				break;
 			case ErrorPacket.FIELD_COUNT:
 				handleErrorPacket(data);

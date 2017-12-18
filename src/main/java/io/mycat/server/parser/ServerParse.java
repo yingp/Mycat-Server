@@ -65,6 +65,17 @@ public final class ServerParse {
 	public static final int MIGRATE  = 203;
     private static final  Pattern pattern = Pattern.compile("(load)+\\s+(data)+\\s+\\w*\\s*(infile)+",Pattern.CASE_INSENSITIVE);
     private static final  Pattern callPattern = Pattern.compile("\\w*\\;\\s*\\s*(call)+\\s+\\w*\\s*",Pattern.CASE_INSENSITIVE);
+	// select matcher
+	private static final  Pattern selectPattern = Pattern.compile("\\s*(select)+\\s+\\w*\\s*",Pattern.CASE_INSENSITIVE);
+
+	/**
+	 *
+	 * @param stmt
+	 * @return
+	 */
+	public static boolean hasQuery(String stmt) {
+		return selectPattern.matcher(stmt).find();
+	}
 
     public static int parse(String stmt) {
 		int length = stmt.length();

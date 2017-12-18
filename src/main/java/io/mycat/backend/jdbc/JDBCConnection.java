@@ -317,6 +317,9 @@ public class JDBCConnection implements BackendConnection {
 				} else {
 					ouputResultSet(sc, orgin);
 				}
+			} else if (sqlType == ServerParse.CALL && ServerParse.hasQuery(orgin)) {
+				// support [ call p_test(1,@pout);select @pout ]
+				ouputResultSet(sc, orgin);
 			} else {
 				executeddl(sc, orgin);
 			}
@@ -623,6 +626,13 @@ public class JDBCConnection implements BackendConnection {
 
 		try {
 			stmt = con.createStatement();
+			// support [ call p_test(1,@pout);select @pout ]
+			if (sql.startsWith("call ")) {
+				String updateSql = sql.substring(0, sql.lastIndexOf(";"));
+				stmt.executeUpdate(updateSql);
+				// finally the query sql
+				sql = sql.substring(sql.lastIndexOf(";") + 1);
+			}
 			rs = stmt.executeQuery(sql);
 
 			List<FieldPacket> fieldPks = new LinkedList<FieldPacket>();
