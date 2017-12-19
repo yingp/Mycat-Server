@@ -87,9 +87,6 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
 		throw new RuntimeException("offer data error!");
 	}
 
-	// support [ call p_test(1,@pout);select @pout ]
-	final static byte[] PROCEDURE_OUT_PACKET = new byte[]{7, 0, 0, 1, 0, 0, 0, 10, 0, 0, 0};
-
 	@Override
 	protected void handleData(byte[] data) {
 		switch (resultStatus) {
@@ -97,7 +94,7 @@ public class MySQLConnectionHandler extends BackendAsyncHandler {
 			switch (data[4]) {
 			case OkPacket.FIELD_COUNT:
 				// support [ call p_test(1,@pout);select @pout ]
-				if (!Arrays.equals(data, PROCEDURE_OUT_PACKET)) {
+				if (!getSource().isCallAndSelectSQL()) {
 					handleOkPacket(data);
 				}
 				break;

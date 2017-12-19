@@ -59,6 +59,8 @@ public class MySQLConnection extends BackendAIOConnection {
 	private volatile boolean borrowed = false;
 	private volatile boolean modifiedSQLExecuted = false;
 	private volatile int batchCmdCount = 0;
+	// support [ call p_test(1,@pout);select @pout ]
+	private volatile boolean callAndSelectSQL = false;
 
 	private static long initClientFlags() {
 		int flag = 0;
@@ -388,6 +390,11 @@ public class MySQLConnection extends BackendAIOConnection {
 		if (!modifiedSQLExecuted && rrn.isModifySQL()) {
 			modifiedSQLExecuted = true;
 		}
+		// support [ call p_test(1,@pout);select @pout ]
+		if (!callAndSelectSQL && ServerParse.CALL == rrn.getSqlType() &&
+				ServerParse.hasQuery(rrn.getStatement())) {
+			callAndSelectSQL = true;
+		}
 		String xaTXID = null;
 		if(sc.getSession2().getXaTXID()!=null){
 			xaTXID = sc.getSession2().getXaTXID()+",'"+getSchema()+"'";
@@ -566,6 +573,7 @@ public class MySQLConnection extends BackendAIOConnection {
 		attachment = null;
 		statusSync = null;
 		modifiedSQLExecuted = false;
+		callAndSelectSQL = false;
 		setResponseHandler(null);
 		pool.releaseChannel(this);
 	}
@@ -655,7 +663,8 @@ public class MySQLConnection extends BackendAIOConnection {
 				+ ", attachment=" + attachment + ", respHandler=" + respHandler
 				+ ", host=" + host + ", port=" + port + ", statusSync="
 				+ statusSync + ", writeQueue=" + this.getWriteQueue().size()
-				+ ", modifiedSQLExecuted=" + modifiedSQLExecuted + "]";
+				+ ", modifiedSQLExecuted=" + modifiedSQLExecuted
+				+ ", callAndSelectSQL=" + callAndSelectSQL + "]";
 	}
 
 	@Override
@@ -668,4 +677,7 @@ public class MySQLConnection extends BackendAIOConnection {
 		return txIsolation;
 	}
 
+	public boolean isCallAndSelectSQL() {
+		return callAndSelectSQL;
+	}
 }
